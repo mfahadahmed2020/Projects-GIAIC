@@ -4,11 +4,35 @@ def load_library():
     library = []
     with open("Ayeshas Library.txt", "r") as file:
         for line in file:
-            title, author, year, read = line.strip().split(",")
-            library.append({"title": title, "author": author, "year": int(year), "read": read == "True"})
+            line = line.strip()
+            if not line:  # Skip empty lines
+                continue
+
+            parts = line.split(",")
+            if len(parts) != 4:
+                st.warning(f"Skipping malformed line: {line}")
+                continue
+
+            title, author, year_str, read_str = parts
+            try:
+                year = int(year_str)
+            except ValueError:
+                st.warning(f"Skipping line with invalid year: {line}")
+                continue
+
+            # Convert the read indicator to boolean
+            read = read_str.strip() == "True"
+
+            library.append({
+                "title": title.strip(),
+                "author": author.strip(),
+                "year": year,
+                "read": read
+            })
     return library
 
 library = load_library()
+
 def save_library():
     with open("Ayeshas Library.txt", "w") as file:
         for book in library:
@@ -40,11 +64,10 @@ if menu == "Add Book":
 elif menu == "Remove Book":
     st.subheader("Remove a Book")
 
-    book_titles = [f'{book["title"]}' for book in library]
+    book_titles = [book["title"] for book in library]
     selected_book = st.selectbox("Select a book to remove", book_titles)
 
     if st.button("Remove Book"):
-    
         title = selected_book
         for book in library:
             if book["title"].lower() == title.lower():
@@ -58,18 +81,16 @@ elif menu == "Remove Book":
 elif menu == "Search Book":
     st.subheader("🔍 Search for a Book")
 
-   
     search_query = st.text_input("Enter the title")
-    
 
     if st.button("Search"):
-     found_books = [book for book in library if search_query.lower() in book["title"].lower()]
-    
-    if found_books:
-        for book in found_books:
-            st.write(f"📖 {book['title']} by {book['author']}")
-    else:
-        st.error(" No books found.")
+        found_books = [book for book in library if search_query.lower() in book["title"].lower()]
+
+        if found_books:
+            for book in found_books:
+                st.write(f"📖 {book['title']} by {book['author']}")
+        else:
+            st.error("No books found.")
 
 elif menu == "View Library":
     st.subheader("📚 Your Library")
@@ -77,7 +98,7 @@ elif menu == "View Library":
     if not library:
         st.warning("No books in your library.")
     else:
-        for index, book in enumerate(library):
+        for book in library:
             st.write(f"{book['title']} by {book['author']}")
 
 elif menu == "Statistics":
@@ -87,6 +108,6 @@ elif menu == "Statistics":
     total_read = len([book for book in library if book["read"]])
     percentage_read = (total_read / total_books) * 100 if total_books > 0 else 0
 
-    st.write(f" Total Books: {total_books}")
-    st.write(f" Books Read: {total_read}")
-    st.write(f"📊 Percentage Read: {percentage_read}%")
+    st.write(f"Total Books: {total_books}")
+    st.write(f"Books Read: {total_read}")
+    st.write(f"📊 Percentage Read: {percentage_read:.2f}%")
